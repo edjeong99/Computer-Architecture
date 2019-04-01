@@ -5,6 +5,15 @@
 /**
  * Load the binary bytes from a .ls8 source file into a RAM array
  */
+
+unsigned char cpu_ram_read(struct cpu *cpu){
+  return cpu->ram[0];
+}
+
+void cpu_ram_write(struct cpu *cpu){
+  
+}
+
 void cpu_load(struct cpu *cpu)
 {
   char data[DATA_LEN] = {
@@ -50,9 +59,25 @@ void cpu_run(struct cpu *cpu)
   while (running) {
     // TODO
     // 1. Get the value of the current instruction (in address PC).
+    unsigned char command = cpu->ram[];
+
     // 2. Figure out how many operands this next instruction requires
     // 3. Get the appropriate value(s) of the operands following this instruction
+
     // 4. switch() over it to decide on a course of action.
+        switch (command) {
+
+            case HALT:
+                running = 0;
+                cpu->PC++;
+                break;
+
+            default:
+                printf("Unrecognized instruction\n");
+                exit(1);
+                break;
+
+    
     // 5. Do whatever the instruction should do according to the spec.
     // 6. Move the PC to the next instruction.
   }
@@ -64,4 +89,10 @@ void cpu_run(struct cpu *cpu)
 void cpu_init(struct cpu *cpu)
 {
   // TODO: Initialize the PC and other special registers
+
+  cpu->PC = 0;
+  memset(cpu->registers, 0, sizeof(cpu->registers)); 
+  memset(cpu->ram, 0, sizeof(cpu->ram)); 
+  
+
 }
