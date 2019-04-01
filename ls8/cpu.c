@@ -64,19 +64,20 @@ void cpu_run(struct cpu *cpu)
  
   // 2. Figure out how many operands this next instruction requires
     num_operands = IR >> 6;
-    if(num_operands > 0){
+
+ // 3. Get the appropriate value(s) of the operands following this instruction
+    if(num_operands > 0){  // if more than 1 operands
       operandA = cpu->ram[cpu->PC + 1];
-       printf("operandA  = %d\n", operandA);
+ //   printf("operandA  = %d\n", operandA);
 
     }
-    if (num_operands > 1){
+    if (num_operands > 1){ // if there are two operands
       operandB = cpu->ram[cpu->PC + 2];
-      printf("operandB  = %d\n", operandB);
+   //   printf("operandB  = %d\n", operandB);
     }
 
    
-    // 3. Get the appropriate value(s) of the operands following this instruction
-
+   
     // 4. switch() over it to decide on a course of action.
         switch (IR) {
 
@@ -89,14 +90,14 @@ void cpu_run(struct cpu *cpu)
 
                 cpu->registers[reg_num] = val;
 
-                cpu->PC += 3;
+                cpu->PC += 1 + num_operands;
                 break;
 
            case PRN:
                 reg_num = operandA;
                 printf("register %d = %d\n", reg_num, cpu->registers[reg_num]);
 
-                cpu->PC += 2;
+                cpu->PC += 1 + num_operands;
                 break;
 
             case HLT:
