@@ -63,6 +63,8 @@ void cpu_load(struct cpu *cpu, char *file)
 
 }
 
+
+
 /**
  * ALU
  */
@@ -102,6 +104,22 @@ void handle_MUL(struct cpu *cpu, unsigned char operandA,  unsigned char operandB
     cpu->PC += 1 + num_operands;
 }
 
+void handle_PUSH(struct cpu *cpu, unsigned char value,  unsigned char num_operands){
+  cpu->registers[07]--;
+  cpu->ram[cpu->registers[07]] = value;
+  cpu->PC += 1 + num_operands;
+   printf("PUSH address %d and value =  %d\n",cpu->registers[07],value);
+}
+// pop the stack and return the value 
+unsigned char handle_POP(struct cpu *cpu,  unsigned char num_operands){
+  cpu->PC += 1 + num_operands; 
+  if( cpu->registers[07] < 0xF4){  // 0xF4 above is reserved area   
+    cpu->registers[07]++;
+    printf("POP address %d and value =  %d\n",cpu->registers[07]-1,cpu->ram[cpu->registers[07]-1]);
+    return cpu->ram[cpu->registers[07]-1];
+  }
+  return NULL;
+}
 /**
  * Run the CPU
  */
@@ -157,6 +175,13 @@ void cpu_run(struct cpu *cpu)
                 handle_MUL(cpu, operandA, operandB, num_operands);
                 break;
 
+           case PUSH:
+                handle_PUSH(cpu, cpu->registers[operandA], num_operands);
+                break;
+
+           case POP:
+                cpu->registers[operandA] = handle_POP(cpu, num_operands);
+                break;
             default:
                 printf("Unrecognized instruction\n");
                 exit(1);
@@ -177,6 +202,6 @@ void cpu_init(struct cpu *cpu)
   cpu->PC = 0;
   memset(cpu->registers, 0, sizeof(cpu->registers)); 
   memset(cpu->ram, 0, sizeof(cpu->ram)); 
-  
+  cpu->registers[07] = 0xF3; // begining point for Stack Pointer (SP)
 
 }
