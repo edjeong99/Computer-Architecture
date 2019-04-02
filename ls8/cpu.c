@@ -110,7 +110,9 @@ void cpu_run(struct cpu *cpu)
     // 5. Do whatever the instruction should do according to the spec.
     // 6. Move the PC to the next instruction.
 
-            case LDI:               
+            case LDI:     
+               printf("LDI executing\n");
+          
                 reg_num = operandA;
                 val = operandB;
 
@@ -127,8 +129,14 @@ void cpu_run(struct cpu *cpu)
                 break;
 
             case HLT:
+            printf("HLT executing\n");
                 running = 0;
                 cpu->PC++;
+                break;
+
+           case MUL:
+printf("MUL executing\n");
+cpu->PC += 1 + num_operands;
                 break;
 
             default:
