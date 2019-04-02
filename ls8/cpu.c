@@ -9,12 +9,12 @@
  * Load the binary bytes from a .ls8 source file into a RAM array
  */
 
-unsigned char cpu_ram_read(struct cpu *cpu){
-  return cpu->ram[0];
+unsigned char cpu_ram_read(struct cpu *cpu, unsigned char index){
+  return cpu->ram[index];
 }
 
-void cpu_ram_write(struct cpu *cpu){
-  
+void cpu_ram_write(struct cpu *cpu, unsigned char index, unsigned char value){
+  cpu->ram[index] = value;
 }
 
 void cpu_load(struct cpu *cpu, char *file)
@@ -28,10 +28,7 @@ void cpu_load(struct cpu *cpu, char *file)
   //   0b00000000,
   //   0b00000001  // HLT
   // };
-
-
   // int address = 0;
-
   // for (int i = 0; i < DATA_LEN; i++) {
   //   cpu->ram[address++] = data[i];
   // }
@@ -81,6 +78,30 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
   }
 }
 
+
+
+void handle_LDI(struct cpu *cpu, unsigned char operandA, unsigned char operandB, unsigned char num_operands) { 
+    cpu->registers[operandA] = operandB;
+    printf("LDI executing reg %d = %d\n", operandA, operandB);
+    cpu->PC += 1 + num_operands;
+}
+void handle_PRN(struct cpu *cpu, unsigned char operandA,  unsigned char num_operands) { 
+    printf("register %d = %d\n", operandA, cpu->registers[operandA]);
+    cpu->PC += 1 + num_operands;
+}
+
+int handle_HLT(struct cpu *cpu ) { 
+    printf("HLT executing\n");
+    cpu->PC++;
+    return 0;
+}
+
+void handle_MUL(struct cpu *cpu, unsigned char operandA,  unsigned char operandB, unsigned char num_operands) { 
+    alu(cpu, ALU_MUL, operandA, operandB );
+    printf("MUL executing reg %d and reg %d result = %d\n",operandA, operandB, cpu->registers[operandA] );
+    cpu->PC += 1 + num_operands;
+}
+
 /**
  * Run the CPU
  */
@@ -119,34 +140,21 @@ void cpu_run(struct cpu *cpu)
     // 6. Move the PC to the next instruction.
 
             case LDI:    
-                reg_num = operandA;
-                val = operandB;
-
-                cpu->registers[reg_num] = val;
-                printf("LDI executing reg %d = %d\n", reg_num, val);
-                cpu->PC += 1 + num_operands;
+                handle_LDI(cpu, operandA, operandB, num_operands);
                 break;
 
            case PRN:
-                reg_num = operandA;
-                printf("register %d = %d\n", reg_num, cpu->registers[reg_num]);
-
-                cpu->PC += 1 + num_operands;
+                handle_PRN(cpu, operandA, num_operands);
                 break;
 
             case HLT:
-            printf("HLT executing\n");
-                running = 0;
-                cpu->PC++;
+                running = handle_HLT(cpu);
                 break;
 
           
           // MUL multiply values in two registers and put the result in the 1st register
            case MUL:
-            
-            alu(cpu, ALU_MUL, operandA, operandB );
-            printf("MUL executing %d * %d = %d\n",cpu->ram[operandA], cpu->ram[operandB], cpu->ram[operandA] );
-            cpu->PC += 1 + num_operands;
+                handle_MUL(cpu, operandA, operandB, num_operands);
                 break;
 
             default:
