@@ -40,16 +40,23 @@ void cpu_load(struct cpu *cpu, char *file)
   FILE *fp;
   int buffer, address = 0;
  
-  unsigned char line[256];
+  unsigned char line[1024];
   fp = fopen(file, "r");
  
-
+// read one line at a time and assign it to cpu->ram
   while(fgets(line,sizeof line,fp)!= NULL) {     
-       cpu->ram[address] = (unsigned char) strtoul(line, NULL, 2);
-        printf ("ram: %x\n",cpu->ram[address]);
-    //  printf("buffer = %s\n",val);
-      // cpu->ram[address] = (unsigned char) strtoul(line, NULL, 2);
-      // printf("line = %s\n",cpu->ram[address]); 
+    char *endptr;
+      unsigned char val = strtoul(line, &endptr, 2);
+          if(line == endptr){
+         printf("Skipping : %s\n", line);
+         continue;
+       }
+       cpu->ram[address] = val ;
+       if(line == endptr){
+         printf("Skipping : %s\n", line);
+         continue;
+       }
+    //    printf ("ram: %x\n",cpu->ram[address]);
       address++;
     }
 
