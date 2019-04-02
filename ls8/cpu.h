@@ -1,12 +1,12 @@
 #ifndef _CPU_H_
 #define _CPU_H_
-
+#define SP 7
 // Holds all information about the CPU
 struct cpu {
   // TODO
   // PC
   unsigned char PC;
-  unsigned char SP; // points to stack. R7 is reserved?
+  //unsigned char SP; // points to stack. R7 is reserved?
 
   // registers (array)
   unsigned char registers[8];
