@@ -47,7 +47,7 @@ void cpu_load(struct cpu *cpu, char *file)
   while(fgets(line,sizeof line,fp)!= NULL) {     
     char *endptr;
       unsigned char val = strtoul(line, &endptr, 2);
-          if(line == endptr){
+          if(line == endptr){ // if there is no binary num in line
          printf("Skipping : %s\n", line);
          continue;
        }
@@ -74,6 +74,7 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
   switch (op) {
     case ALU_MUL:
       // TODO
+      cpu->registers[regA] = cpu->registers[regA] * cpu->registers[regB];
       break;
 
     // TODO: implement more ALU ops
@@ -117,14 +118,12 @@ void cpu_run(struct cpu *cpu)
     // 5. Do whatever the instruction should do according to the spec.
     // 6. Move the PC to the next instruction.
 
-            case LDI:     
-               printf("LDI executing\n");
-          
+            case LDI:    
                 reg_num = operandA;
                 val = operandB;
 
                 cpu->registers[reg_num] = val;
-
+                printf("LDI executing reg %d = %d\n", reg_num, val);
                 cpu->PC += 1 + num_operands;
                 break;
 
@@ -141,9 +140,13 @@ void cpu_run(struct cpu *cpu)
                 cpu->PC++;
                 break;
 
+          
+          // MUL multiply values in two registers and put the result in the 1st register
            case MUL:
-printf("MUL executing\n");
-cpu->PC += 1 + num_operands;
+            
+            alu(cpu, ALU_MUL, operandA, operandB );
+            printf("MUL executing %d * %d = %d\n",cpu->ram[operandA], cpu->ram[operandB], cpu->ram[operandA] );
+            cpu->PC += 1 + num_operands;
                 break;
 
             default:
