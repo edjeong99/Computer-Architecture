@@ -74,15 +74,16 @@ void cpu_load(struct cpu *cpu, char *file)
 void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB)
 {
 
+// not sure about how to use enum alu_op
   switch (op) {
     case MUL:
       // TODO
       cpu->registers[regA] = cpu->registers[regA] * cpu->registers[regB];
-      printf("ALU MUL executing reg %d and reg %d result = %d\n",regA, regB, cpu->registers[regA] );
+    //  printf("ALU MUL executing reg %d and reg %d result = %d\n",regA, regB, cpu->registers[regA] );
       break;
     case ADD:
       cpu->registers[regA] = cpu->registers[regA] + cpu->registers[regB];
-       printf("ADD reg %d and reg %d result = %d\n",regA, regB, cpu->registers[regA] );
+   //    printf("ADD reg %d and reg %d result = %d\n",regA, regB, cpu->registers[regA] );
       break;
     
   }
@@ -92,16 +93,16 @@ void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB
 
 void handle_LDI(struct cpu *cpu, unsigned char operandA, unsigned char operandB, unsigned char num_operands) { 
     cpu->registers[operandA] = operandB;
-    printf("LDI executing reg %d = %d\n", operandA, operandB);
+   // printf("LDI executing reg %d = %d\n", operandA, operandB);
     cpu->PC += 1 + num_operands;
 }
 void handle_PRN(struct cpu *cpu, unsigned char operandA,  unsigned char num_operands) { 
-    printf("PRN %d\n",  cpu->registers[operandA]);
+   // printf("PRN %d\n",  cpu->registers[operandA]);
     cpu->PC += 1 + num_operands;
 }
 
 int handle_HLT(struct cpu *cpu ) { 
-    printf("HLT executing\n");
+   // printf("HLT executing\n");
     return 0;
 }
 
@@ -116,24 +117,25 @@ void handle_PUSH(struct cpu *cpu, unsigned char value,  unsigned char num_operan
   cpu->registers[SP]--;
   cpu->ram[cpu->registers[SP]] = value;
   cpu->PC += 1 + num_operands;
-   printf("PUSH address %d and value =  %d\n",cpu->registers[07],value);
+  // printf("PUSH address %d and value =  %d\n",cpu->registers[07],value);
 }
 // pop the stack and return the value 
 unsigned char handle_POP(struct cpu *cpu,  unsigned char num_operands){
   cpu->PC += 1 + num_operands; 
   if( cpu->registers[SP] < 0xF4){  // 0xF4 above is reserved area   
     cpu->registers[SP]++;
-    printf("POP address %d and value =  %d\n",cpu->registers[07]-1,cpu->ram[cpu->registers[07]-1]);
+  //  printf("POP address %d and value =  %d\n",cpu->registers[07]-1,cpu->ram[cpu->registers[07]-1]);
     return cpu->ram[cpu->registers[SP]-1];
   }
   return NULL;
 }
 
+// call set next operand in SP and set PC to call address
 void handle_CALL(struct cpu *cpu, unsigned char value,  unsigned char num_operands){
   cpu->registers[SP]--;
   cpu->ram[cpu->registers[SP]] = cpu->PC+2;
   cpu->PC = cpu->registers[value];
-   printf("CALL reg num = %d   cpu->PC (register[value]) =  %d\n",value, cpu->PC);
+  // printf("CALL reg num = %d   cpu->PC (register[value]) =  %d\n",value, cpu->PC);
 }
 
 /**
@@ -165,9 +167,9 @@ void cpu_run(struct cpu *cpu)
     }
 
    
-   // check alu flag
+   // check alu flag and see if ALU bit is true
     mask = 0b00100000;
-    // determine if ALU bit is true
+    // 
     if ((IR & mask) == 0b00100000)
     {
       alu(cpu, IR, operandA, operandB);
@@ -215,6 +217,7 @@ void cpu_run(struct cpu *cpu)
             break;
           //RET: return PC from subroutine by moving PC to the address stored on top of stack
           
+          // RET set PC to where stack pops
           case RET:
             cpu->PC = handle_POP(cpu, num_operands);   
             printf("RET  cpu->PC = %d\n", cpu->PC);     
