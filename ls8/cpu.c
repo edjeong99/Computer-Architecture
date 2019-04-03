@@ -39,7 +39,10 @@ void cpu_load(struct cpu *cpu, char *file)
  
   unsigned char line[1024];
   fp = fopen(file, "r");
- 
+   if (fp == NULL) {
+    perror("File not found.");
+    exit(1);
+  }
 // read one line at a time and assign it to cpu->ram
   while(fgets(line,sizeof line,fp)!= NULL) {     
     char *endptr;
@@ -70,13 +73,18 @@ void cpu_load(struct cpu *cpu, char *file)
  */
 void alu(struct cpu *cpu, enum alu_op op, unsigned char regA, unsigned char regB)
 {
+
   switch (op) {
-    case ALU_MUL:
+    case MUL:
       // TODO
       cpu->registers[regA] = cpu->registers[regA] * cpu->registers[regB];
+      printf("ALU MUL executing reg %d and reg %d result = %d\n",regA, regB, cpu->registers[regA] );
       break;
-
-    // TODO: implement more ALU ops
+    case ADD:
+      cpu->registers[regA] = cpu->registers[regA] + cpu->registers[regB];
+       printf("ADD reg %d and reg %d result = %d\n",regA, regB, cpu->registers[regA] );
+      break;
+    
   }
 }
 
@@ -88,21 +96,20 @@ void handle_LDI(struct cpu *cpu, unsigned char operandA, unsigned char operandB,
     cpu->PC += 1 + num_operands;
 }
 void handle_PRN(struct cpu *cpu, unsigned char operandA,  unsigned char num_operands) { 
-    printf("register %d = %d\n", operandA, cpu->registers[operandA]);
+    printf("PRN %d\n",  cpu->registers[operandA]);
     cpu->PC += 1 + num_operands;
 }
 
 int handle_HLT(struct cpu *cpu ) { 
     printf("HLT executing\n");
-    cpu->PC++;
     return 0;
 }
 
-void handle_MUL(struct cpu *cpu, unsigned char operandA,  unsigned char operandB, unsigned char num_operands) { 
-    alu(cpu, ALU_MUL, operandA, operandB );
-    printf("MUL executing reg %d and reg %d result = %d\n",operandA, operandB, cpu->registers[operandA] );
-    cpu->PC += 1 + num_operands;
-}
+// void handle_MUL(struct cpu *cpu, unsigned char operandA,  unsigned char operandB, unsigned char num_operands) { 
+//     alu(cpu, ALU_MUL, operandA, operandB );
+//     printf("MUL executing reg %d and reg %d result = %d\n",operandA, operandB, cpu->registers[operandA] );
+//     cpu->PC += 1 + num_operands;
+// }
 
 // handle push for stack
 void handle_PUSH(struct cpu *cpu, unsigned char value,  unsigned char num_operands){
@@ -121,6 +128,14 @@ unsigned char handle_POP(struct cpu *cpu,  unsigned char num_operands){
   }
   return NULL;
 }
+
+void handle_CALL(struct cpu *cpu, unsigned char value,  unsigned char num_operands){
+  cpu->registers[SP]--;
+  cpu->ram[cpu->registers[SP]] = cpu->PC+2;
+  cpu->PC = cpu->registers[value];
+   printf("CALL reg num = %d   cpu->PC (register[value]) =  %d\n",value, cpu->PC);
+}
+
 /**
  * Run the CPU
  */
@@ -128,6 +143,7 @@ void cpu_run(struct cpu *cpu)
 {
   int running = 1; // True until we get a HLT instruction
   unsigned char reg_num, val, IR, operandA, operandB, num_operands;
+  int mask;  // mask is used to check vertain value in binary num.
 
   while (running) {
     // TODO
@@ -149,10 +165,18 @@ void cpu_run(struct cpu *cpu)
     }
 
    
-   
+   // check alu flag
+    mask = 0b00100000;
+    // determine if ALU bit is true
+    if ((IR & mask) == 0b00100000)
+    {
+      alu(cpu, IR, operandA, operandB);
+      cpu->PC += 1 + num_operands;
+    }   
+
+    else{ // if it's not alu operation
     // 4. switch() over it to decide on a course of action.
         printf("IR is %d\n", IR);
-
         switch (IR) {
 
     // 5. Do whatever the instruction should do according to the spec.
@@ -172,9 +196,9 @@ void cpu_run(struct cpu *cpu)
 
           
           // MUL multiply values in two registers and put the result in the 1st register
-           case MUL:
-                handle_MUL(cpu, operandA, operandB, num_operands);
-                break;
+          //  case MUL:
+          //       handle_MUL(cpu, operandA, operandB, num_operands);
+          //       break;
 
            case PUSH:
                 handle_PUSH(cpu, cpu->registers[operandA], num_operands);
@@ -183,6 +207,19 @@ void cpu_run(struct cpu *cpu)
            case POP:
                 cpu->registers[operandA] = handle_POP(cpu, num_operands);
                 break;
+
+
+          
+          case CALL:
+            handle_CALL(cpu, operandA, num_operands);
+            break;
+          //RET: return PC from subroutine by moving PC to the address stored on top of stack
+          
+          case RET:
+            cpu->PC = handle_POP(cpu, num_operands);   
+            printf("RET  cpu->PC = %d\n", cpu->PC);     
+            break;
+
             default:
                 printf("Unrecognized instruction\n");
                 exit(1);
@@ -191,6 +228,7 @@ void cpu_run(struct cpu *cpu)
     
 
   }
+    }
 }
 }
 /**
@@ -203,6 +241,6 @@ void cpu_init(struct cpu *cpu)
   cpu->PC = 0;
   memset(cpu->registers, 0, sizeof(cpu->registers)); 
   memset(cpu->ram, 0, sizeof(cpu->ram)); 
-  cpu->registers[SP] = 0xF3; // begining point for Stack Pointer (SP)
+  cpu->registers[SP] = 0xF4; // begining point for Stack Pointer (SP)
 
 }
